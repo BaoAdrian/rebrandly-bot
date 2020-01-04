@@ -6,6 +6,10 @@ import psycopg2
 from random import randint
 from slackclient import SlackClient
 
+# Rebrandly dependencies
+import requests
+import json
+
 # Read data from secrets directory
 data = {}
 with open("secrets/secrets.json", "r") as f:
@@ -38,12 +42,42 @@ def handle_command(command, channel):
     default_response = "Hmmm, I didn't quite catch that."
     response = None
 
+    print("Command: {}".format(command))
+    response = "Destination: " + str(command) + "\n" + \
+               "New URL:     " + str(create_short_url(command))
+
     # Sends the response back to the channel
     slack_client.api_call(
         "chat.postMessage",
         channel=channel,
         text=response or default_response
     )
+
+
+def create_short_url(provided_url):
+    provided_url = provided_url[1:-1] # remove brackets
+
+    linkRequest = {
+    "destination": str(provided_url)
+    , "domain": { "fullName": "rebrand.ly" }
+    }
+
+    requestHeaders = {
+    "Content-type": "application/json",
+    "apikey": data["REBRANDLY_API_KEY"]
+    }
+
+    r = requests.post("https://api.rebrandly.com/v1/links", 
+        data = json.dumps(linkRequest),
+        headers=requestHeaders)
+
+    print("\n" + str(r.json()) + "\n")
+
+    # pylint: disable=maybe-no-member
+    if (r.status_code == requests.codes.ok):
+        link = r.json()
+        print("Long URL was %s, short URL is https://%s" % (link["destination"], link["shortUrl"]))
+        return "https://" + link["shortUrl"]
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
