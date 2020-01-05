@@ -1,5 +1,5 @@
 # Rebrandly Slack Bot
-This Slack Bot can be installed to provided a quick and easy way to shorten URLs hitting the Rebrandly API. Simply provide the bot with a URL to shorten and it will return the resultant response from the Rebrandly API.
+This Slack Bot can be installed to provide your workspace with a quick and easy way to shorten URLs using the Rebrandly API. Simply provide the bot with a URL to shorten and it will return the resultant response from the Rebrandly API.
 
 # Getting Started
 ## Create SlackApp
