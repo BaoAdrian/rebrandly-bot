@@ -22,7 +22,7 @@ Complete the process of creating and installing a [SlackApp](https://api.slack.c
 3. Run the bot. If successfully running, you should see a message following the execution
     ```
     $ python bot.py
-    Assignment Bot is now running!
+    Slack Bot is now running!
     ```
 
 # Interacting with the bot
