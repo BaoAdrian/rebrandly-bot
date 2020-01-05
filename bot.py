@@ -109,7 +109,7 @@ def create_short_url(provided_url):
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
-        print("Assignment Bot is now running!")
+        print("Slack Bot is now running!")
         bot_id = slack_client.api_call("auth.test")["user_id"]
         while True:
             command, channel = parse_bot_commands(slack_client.rtm_read())
