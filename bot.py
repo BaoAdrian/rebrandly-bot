@@ -5,10 +5,7 @@ import json
 import psycopg2
 from random import randint
 from slackclient import SlackClient
-
-# Rebrandly dependencies
 import requests
-import json
 
 # Return code constants
 ERROR_CODE = -1
