@@ -2,9 +2,8 @@ import os
 import time
 import re
 import json
-import psycopg2
 from random import randint
-from slackclient import SlackClient
+from slack import RTMClient # v2 slackclient
 import requests
 
 # Return code constants
@@ -17,27 +16,49 @@ with open("secrets/secrets.json", "r") as f:
     data = json.load(f)
 
 # instantiate Slack client
-slack_client = SlackClient(data["BOT_USER_ACCESS_TOKEN"])
+slack_client = RTMClient(token=data["BOT_USER_ACCESS_TOKEN"])
 
 # bots's user ID in Slack: value is assigned after the bot starts up
 bot_id = None
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-def parse_bot_commands(slack_events):
-    for event in slack_events:
-        if event["type"] == "message" and not "subtype" in event:
-            user_id, message = parse_direct_mention(event["text"])
-            if user_id == bot_id:
-                return message, event["channel"]
+@RTMClient.run_on(event="message")
+def handle_event(**payload):
+    """
+    Method that is triggered whenever a message is recieved in a shared channel
+    with the bot. Parses the message and handles accordingly.
+    """
+    data = payload["data"]
+    web_client = payload["web_client"]
+    bot_id = web_client.api_call("auth.test")["user_id"]
+
+    command, channel = parse_bot_commands(data, bot_id)
+    if command:
+        handle_command(web_client, command, channel)
+
+def parse_bot_commands(event_data, bot_id):
+    """
+    Extracts message if bot is mentioned, otherwise, returns None
+    """
+    user_id, message = parse_direct_mention(event_data["text"])
+    if user_id == bot_id:
+        return message, event_data["channel"]
     return None, None
 
 def parse_direct_mention(message_text):
+    """
+    Parses the message text if able, otherwise, returns None
+    """
     matches = re.search(MENTION_REGEX, message_text)
     # the first group contains the username, the second group contains the remaining message
     return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
 
-def handle_command(command, channel):
+def handle_command(web_client, command, channel):
+    """
+    Method called when valid command/mention is detected and handles
+    accordingly.
+    """
     # Default response is help text for the user
     default_response = "Hmmm, I didn't quite catch that."
     invalid_url_response = "Hmmm, the url you provided was invalid, please try again"
@@ -57,13 +78,13 @@ def handle_command(command, channel):
                 response = invalid_url_response
 
     # Sends the response back to the channel
-    slack_client.api_call(
-        "chat.postMessage",
+    web_client.chat_postMessage(
         channel=channel,
         text=response or default_response
     )
 
 def get_help_menu():
+    """ Returns a help menu to assist user in bot usage """
     return "```Usage: @rebrandlybot [url|help]\n\n" + \
     "Description: Provide the bot with a URL and it will generate a\n" + \
     "shortened, rebranded, link hitting the Rebrandly API.\n" + \
@@ -71,6 +92,11 @@ def get_help_menu():
     "\t> @rebrandlybot https://www.samplesite.com\n```"
 
 def create_short_url(provided_url):
+    """
+    Generates a POST to the Rebrandly API with a provided_url (longUrl)
+    that needs to be shortened (rebranded). Returns the status code and
+    resultant URL (if one was generated)
+    """
     provided_url = provided_url[1:-1] # remove brackets: '<https://...>'
 
     linkRequest = {
@@ -105,13 +131,5 @@ def create_short_url(provided_url):
     return (ERROR_CODE, None)
 
 if __name__ == "__main__":
-    if slack_client.rtm_connect(with_team_state=False):
-        print("Slack Bot is now running!")
-        bot_id = slack_client.api_call("auth.test")["user_id"]
-        while True:
-            command, channel = parse_bot_commands(slack_client.rtm_read())
-            if command:
-                handle_command(command, channel)
-            time.sleep(RTM_READ_DELAY)
-    else:
-        print("Connection failed. Exception traceback printed above.")
+    print("Starting Slack Bot...")
+    slack_client.start()
