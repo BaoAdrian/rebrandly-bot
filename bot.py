@@ -10,13 +10,11 @@ import requests
 ERROR_CODE = -1
 VALID_CODE = 0
 
-# Read data from secrets directory
-data = {}
+# Read data from secrets directory & instantiate Slack Client (RTM)
+secrets_data = {}
 with open("secrets/secrets.json", "r") as f:
-    data = json.load(f)
-
-# instantiate Slack client
-slack_client = RTMClient(token=data["BOT_USER_ACCESS_TOKEN"])
+    secrets_data = json.load(f)
+slack_client = RTMClient(token=secrets_data["BOT_USER_ACCESS_TOKEN"])
 
 # bots's user ID in Slack: value is assigned after the bot starts up
 bot_id = None
@@ -70,7 +68,7 @@ def handle_command(web_client, command, channel):
         status_code, rebranded_link = create_short_url(command)
         if status_code == VALID_CODE:
             response = "Destination: \n" + "> " + str(command) + "\n" + \
-                    "New URL:     \n" + "> " + str(rebranded_link)
+                       "New URL:     \n" + "> " + str(rebranded_link)
         else:
             if rebranded_link:
                 response = "Request returned error with the following message: \n" + rebranded_link
@@ -126,7 +124,10 @@ def create_short_url(provided_url):
         if len(r_data["errors"]) != 0: # errors exist
             error_response = ""
             for error in r_data["errors"]:
-                error_response += "> " + str(error["code"]) + ": " + str(error["verbose"]) + "\n"
+                try:
+                    error_response += "> " + str(error["code"]) + ": " + str(error["verbose"]) + "\n"
+                except KeyError: # No verbose descriptor
+                    error_response += "> " + str(error["code"]) + "\n"
             return (ERROR_CODE, error_response)
     return (ERROR_CODE, None)
 
