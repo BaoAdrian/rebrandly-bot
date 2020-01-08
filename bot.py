@@ -89,7 +89,7 @@ class RebrandlyBot:
         if self.command.startswith("help"):
             response = self.get_help_menu()
         else:
-            status_code, rebranded_link = self.create_short_url()
+            status_code, rebranded_link = self.rebrand_link()
             if status_code == VALID_CODE:
                 response = "Destination: \n" + "> " + str(self.command) + "\n" + \
                            "New URL:     \n" + "> " + str(rebranded_link)
@@ -113,7 +113,7 @@ class RebrandlyBot:
         "Example:\n" + \
         "\t> @rebrandlybot https://www.samplesite.com\n```"
 
-    def create_short_url(self):
+    def rebrand_link(self):
         """
         Generates a POST to the Rebrandly API with a provided URL (longUrl)
         that needs to be shortened (rebranded). Returns the status code and
