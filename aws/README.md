@@ -2,9 +2,8 @@
 
 
 # Connecting Bot to AWS Lambda
-
 ## 1. Create your Lambda Function
-   - On the AWS Lambda Console, navigate to **Functions** > **Create Function**
+   - On the AWS Lambda Consolecod, navigate to **Functions** > **Create Function**
    - Select **Author From Scratch** since the code is provided for your convenience
    - Give your function a name
    - Select **Python3.7** for your Runtime configuration
@@ -14,7 +13,7 @@
 
 ## 2. Configure a Trigger for your Lambda Function
    - Add a **Trigger** > **API Gateway**
-   - Under **API** > **Create a new API** > `HTTP API** > **Add**
+   - Under **API** > **Create a new API** > **HTTP API** > **Add**
    - Copy and Save the **API Endpoint** that was just created
       - This is the endpoint used by the Slash Command below
 
