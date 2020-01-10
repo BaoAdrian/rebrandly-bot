@@ -38,7 +38,7 @@ There are a couple ways to setup this SlackApp with your Workspace. You will nee
     ```
 
 
-5. Now you can go into your workspace and interact with the bot using the formatting [below](#interacting with the bot)!
+5. Now you can go into your workspace and interact with the bot using the formatting below!
 
 ## Interacting with the bot
 Currently, the bot supports the operation to shorten any provided URL using the following interaction:
