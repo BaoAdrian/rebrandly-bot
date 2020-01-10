@@ -115,16 +115,16 @@ class RebrandlyBot:
 
     def rebrand_link(self):
         """
-        Generates a POST to the Rebrandly API with a provided URL (longUrl)
+        Generates a POST to the Rebrandly API with a destination URL (longUrl)
         that needs to be shortened (rebranded). Returns the status code and
         resultant URL (if one was generated)
         """
-        provided_url = self.command[1:-1] # remove brackets: '<https://...>'
+        destination = self.command[1:-1] # remove brackets from longUrl: '<https://...>'
 
         linkRequest = {
-            "destination": str(provided_url),
+            "destination": str(destination),
             "domain": { "fullName": "rebrand.ly" }
-        }
+        } 
 
         requestHeaders = {
             "Content-type": "application/json",
@@ -167,6 +167,7 @@ def handle_event(**payload):
     rebrandly_bot.parse_bot_command()
     if rebrandly_bot.get_command():
         rebrandly_bot.handle_command()
+
 
 if __name__ == "__main__":
     # Read data from secrets directory & instantiate Slack Client (RTM)
