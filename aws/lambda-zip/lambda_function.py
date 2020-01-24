@@ -13,6 +13,8 @@ VALID_CODE = 0
 BOT_USER_OAUTH_TOKEN = os.environ['BOT_USER_OAUTH_TOKEN']
 REBRANDLY_API_KEY = os.environ['REBRANDLY_API_KEY']
 
+web_client = slack.WebClient(token=BOT_USER_OAUTH_TOKEN)
+
 def lambda_handler(event, context):
     logger.info("Triggered AWS Lambda: rebrandly-event")
 
@@ -22,14 +24,7 @@ def lambda_handler(event, context):
     text = body["event"]["text"].split()
     command_text = ' '.join(text[1:])
     
-    logger.info("Body: {}".format(body))
-    logger.info("Channel: {}".format(channel))
-    logger.info("Text: {}".format(text))
-    logger.info("Response Text: {}".format(command_text))
-
-    response = handle_command(command_text)
-
-    web_client = slack.WebClient(token=BOT_USER_OAUTH_TOKEN)
+    response = handle_command(command_text, channel)
     web_client.chat_postMessage(
         channel=channel,
         text=response
@@ -40,7 +35,7 @@ def lambda_handler(event, context):
         'body': 'Process for rebrandly-event has been completed!'
     }
 
-def handle_command(text):
+def handle_command(text, channel):
     """
     Handles the current command accordingly & posts response
     using the WebClient.
@@ -62,6 +57,8 @@ def handle_command(text):
         response = list_links(text)
     elif text.startswith("count"):
         response = count_links()
+    elif text.startswith("search"):
+        response = search_links(text, channel)
     elif text.startswith("rebrand-custom"):
         is_rebrand = True
         destination = text.split()[1]
@@ -91,6 +88,7 @@ def get_help_menu():
         "\t`help` Displays this help menu\n" + \
         "\t`rebrand [url]` Rebrands the provided url with auto-generated slashtag\n" + \
         "\t`rebrand-custom [url] [domain|slashtag]` Accepts custom domain & slashtag values\n" + \
+        "\t`search [show] [destination|slashtag|domain]` Searches for links matching the given arguments\n" + \
         "\t`list [limit|orderBy|orderDir]` Lists the latest rebranded links\n" + \
         "\t`count` Counts the total number of rebranded links\n" + \
         "\t`where` Shows you where my code is located with usage examples\n"
@@ -113,9 +111,9 @@ def rebrand_custom_link(text):
         "domain": None
     }
     text = text.replace("=", " ")
-    text = ' '.join(text.split()[2:])
+    params = text.split()[2:]
     try:
-        args = extract_args(text, default_args)
+        args = extract_args(params, default_args)
     except:
         return (ERROR_CODE, "Unable to extract arguments. Please verify the formatting and try again.")
 
@@ -145,8 +143,12 @@ def rebrand_link(destination, slashtag=None, domain=None):
     @return (CODE, RESPONSE) tuple used to generate response by caller
     """
     logger.info("Received REBRAND request")
-    logger.info("Destination: {}".format(destination))
     destination = destination[1:-1] # Remove brackets: '<https... >'
+    
+    # Cleanup: https://somesite.com/ -> https://somesite.com
+    if destination[-1] == '/':
+        destination = destination[:-1]
+    
     linkRequest = {
         "destination": destination
     }
@@ -204,9 +206,9 @@ def list_links(text):
     
     # Overwrite default args (if required)
     text = text.replace("=", " ")
-    text = ' '.join(text.split()[1:])
+    params = text.split()[1:]
     try:
-        args = extract_args(text, default_args)
+        args = extract_args(params, default_args)
     except:
         return "Recieved the following error:\n" + \
         "> Unable to extract arguments. Please verify the formatting and try again."
@@ -242,12 +244,9 @@ def extract_args(params, default_args):
     @param default_args Dictionary containing default args for functionality
     @return An updated default_args dictionary containing updated args
     """
-    params = params.split()
-    logger.info("Params: {}".format(params))
     for i in range(0, len(params), 2):
         key,value = params[i], params[i+1]
         default_args[key] = value
-        logger.info("Extracted arg: ({}, {})".format(key, value))
     
     return default_args
 
@@ -255,7 +254,6 @@ def count_links():
     """
     Retrieves the total count of all rebranded links under 
     the current API_KEY
-    Sample text: count limit=10
     """
     logger.info("Received COUNT request")
     params = {
@@ -263,7 +261,6 @@ def count_links():
     }
     
     response = requests.get("https://api.rebrandly.com/v1/links/count", params=params)
-    logger.info("Count Response: {}".format(response.text))
     res_json = json.loads(response.text)
     
     try:
@@ -275,3 +272,108 @@ def get_github_repo():
     """ Generates response containing Github repo where bot code is located """
     return "You can find my code here: `https://github.com/BaoAdrian/rebrandly-bot`\n" + \
     "Feel free to report bugs or request for features by opening a new Issue!"
+    
+def search_links(text, channel):
+    """
+    Searches existing links according to params given by user
+    
+    @text String containing search parameters
+    @channel Slack Channel to post message to
+    @return String response to be posted
+    """
+    logger.info("Received SEARCH request")
+    text = text.replace("=", " ")
+    params = text.split()[1:]
+    
+    if params[0].lower() in {'show', '--show'}:
+        show = True
+        params = params[1:]
+    else:
+        show = False
+    
+    default_args = {
+        "destination": None,
+        "slashtag": None,
+        "domain": None
+    }
+    args = extract_args(params, default_args)
+    
+    # Cleanup destination or domain if necessary
+    if args["destination"]:
+        args["destination"] = args["destination"][1:-1] # remove brackets
+    if args["domain"]:
+        idx = args["domain"].find('|')
+        args["domain"] = args["domain"][idx+1:-1]
+    
+    data_store = collect_data()
+    
+    # Use args to search for matching values
+    results = []
+    for link in data_store:
+        if args["destination"] and link["destination"] != args["destination"]:
+            continue
+        if args["slashtag"] and link["slashtag"] != args["slashtag"]:
+            continue
+        if args["domain"] and link["domain"]["fullName"] != args["domain"]:
+            continue
+        results.append(link)
+        
+    return generate_response_for_search(show, results, args, channel)
+
+def collect_data():
+    """
+    Builds the data store by collecting all existing links
+    
+    @return data collected from paginated GET requests
+    """
+    data_store = []
+    params = {
+        "apikey": REBRANDLY_API_KEY,
+        "last": None
+    }
+   
+    while True:
+        response = requests.get("https://api.rebrandly.com/v1/links", params=params)
+        response_json = json.loads(response.text)
+        data_store += response_json
+
+        if len(response_json) < 25:
+            break
+        else:
+            # Update with last id to continue pagination
+            params["last"] = response_json[-1]["id"]
+    
+    return data_store
+    
+def generate_response_for_search(show, results, args, channel):
+    """
+    Creates formatted response text to post as Slack response from Bot
+    
+    @param show Boolean value used to determine if user wishes to see data
+    @param results List of Link details associated with requested search params
+    @param args Dictionary containing arguments requested by user
+    @param channel Slack Channel to post message to
+    @return String response to be posted
+    """
+    response = "Found `{}` results associated with args: `{}`\n".format(len(results), str(args))
+    if show and results:
+        response += "```"
+        for i in range(len(results)):
+            res = results[i]
+            response += "[{}]\tshortUrl:  {}\n".format(i+1, res["shortUrl"]) + \
+            "   \tslashtag:  {}\n".format(res["slashtag"]) + \
+            "   \tcreatedAt: {}\n".format(res["createdAt"]) + \
+            "   \tdomainId:  {}\n\n".format(res["domainId"])
+            
+            # Ensure character limit is not exceeded: 
+            # https://api.slack.com/changelog/2018-04-truncating-really-long-messages
+            if (i+1) % 10 == 0:
+                response += "```"
+                web_client.chat_postMessage(
+                    channel=channel,
+                    text=response
+                )
+                response = "```"
+        response += "```"
+    return response
+    
