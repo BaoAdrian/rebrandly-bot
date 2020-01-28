@@ -83,15 +83,16 @@ def handle_command(text, channel):
 
 def get_help_menu():
     return "This is how you can interact with me:\n" + \
-        "```@rebrandlybot [command]```\n" + \
+        "```@rebrandlybot [command] [args]```\n" + \
         "Supported *commands*:\n" + \
         "\t`help` Displays this help menu\n" + \
+        "\t`count` Counts the total number of rebranded links\n" + \
+        "\t`where` Shows you where my code is located with usage examples\n" + \
         "\t`rebrand [url]` Rebrands the provided url with auto-generated slashtag\n" + \
         "\t`rebrand-custom [url] [domain|slashtag]` Accepts custom domain & slashtag values\n" + \
         "\t`search [show] [destination|slashtag|domain]` Searches for links matching the given arguments\n" + \
-        "\t`list [limit|orderBy|orderDir]` Lists the latest rebranded links\n" + \
-        "\t`count` Counts the total number of rebranded links\n" + \
-        "\t`where` Shows you where my code is located with usage examples\n"
+        "\t`list [limit|orderBy|orderDir]` Lists the latest rebranded links\n"
+        
 
 def rebrand_custom_link(text):
     """
@@ -124,7 +125,7 @@ def rebrand_custom_link(text):
         if not (re.match("^[A-Za-z0-9_-]*$", args["slashtag"]) and len(args["slashtag"]) >= 1 and len(args["slashtag"]) <= 40):
             args["slashtag"] = default_args["slashtag"] # revert to default
 
-    if args["domain"]:
+    if args["domain"]: # '<http://rebrand.ly|rebrand.ly>' > 'rebrand.ly'
         idx = value.find('|')
         args["domain"] = value[idx+1:-1]
 
@@ -285,12 +286,22 @@ def search_links(text, channel):
     text = text.replace("=", " ")
     params = text.split()[1:]
     
-    if params[0].lower() in {'show', '--show'}:
+    if params and params[0].lower() in {'show', '--show'}:
         show = True
-        params = params[1:]
     else:
         show = False
     
+    logger.info("Length or {}: {}".format(params, len(params)))
+    logger.info("Show: {}".format(show))
+    
+    # Detect case where there is nothing to process
+    if not params or (len(params) == 1 and show):
+        return "Whoops! I need some parameters in order to perform a search!\n" + \
+        "Give me a `destination`, `domain`, or `slashtag` to search for or " + \
+        "try using the `help` command for more info."
+    elif show:
+        params = params[1:]
+
     default_args = {
         "destination": None,
         "slashtag": None,
@@ -299,9 +310,9 @@ def search_links(text, channel):
     args = extract_args(params, default_args)
     
     # Cleanup destination or domain if necessary
-    if args["destination"]:
-        args["destination"] = args["destination"][1:-1] # remove brackets
-    if args["domain"]:
+    if args["destination"]: # '<https://url.com>' > 'https://url.com'
+        args["destination"] = args["destination"][1:-1]
+    if args["domain"]: # '<http://rebrand.ly|rebrand.ly>' > 'rebrand.ly'
         idx = args["domain"].find('|')
         args["domain"] = args["domain"][idx+1:-1]
     
