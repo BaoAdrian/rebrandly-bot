@@ -35,7 +35,7 @@ This portion requires you to navigate to the [`Slack API`](https://api.slack.com
    - We will need to setup the first lambda function following [these steps](#primary-lambda-function-setup) before proceeding. Once done, return to begin completing step 5 below.
 
 5. Verifying our Lambda Function Endpoint
-   - Paste the API Endpoint into the entry and complete the verification challenge
+   - Paste the API Endpoint into the **Request URL** entry and complete the verification challenge
    - Once verified, select **Subscribe to Bot Events** and subscribe to the `app_mention` event
 
 
@@ -43,9 +43,9 @@ That's it from the Slack side! Now we can finish configuring the [primary lambda
 
 
 ## AWS Lambda Setup
-We will be setting up two lambda functions to support this bots functionality. The reason for the second function is due to the Slack API have a `timeout` parameter set **3 seconds** where the computation/processing done by the lambda functiom must complete and return an `HTTP 200 OK` response within 3 seconds. 
+We will be setting up two lambda functions to support this bots functionality. The reason for the second function is due to the Slack API having a `timeout` parameter set to **3 seconds** where the computation/processing done by the lambda functiom must complete and return an `HTTP 200 OK` response within 3 seconds. 
 
-If it fails to send that response within 3 seconds, it will retry the same request assuming the first request failed or timed out. To resolve this issue, the primary lambda function will be setup to *Asynchronously* Invoke the secondary lambda function and immediately return the requested `HTTP 200 OK` response while the secondary function continues processing the command.
+If it fails to send that response within 3 seconds, it will retry the same request assuming the first request failed or timed out, resulting in duplicate responses. To resolve this issue, the primary lambda function will be setup to *Asynchronously* Invoke the secondary lambda function and immediately return the requested `HTTP 200 OK` response while the secondary function continues processing the command.
 
 ### Primary Lambda Function Setup
 1. Navigate to the AWS Console and create a new **Lambda Function**
@@ -107,10 +107,7 @@ This lamdba function, which for this guide we will name `rebrandly-event`, is st
       - Inside the **Function Code**
       - Inside the **Destination** configuration
 
-2. For the **Trigger**, create an **API Gateway**, same as the primary function.
-
-
-3. Setup `Function Code`
+2. Setup **Function Code**
    - Inside of the `lambda` directory is the `lambda_function.py` and `requirement.txt` needed to support the bot's functionality.
    - From the root directory, run the following sequence of commands to install the requirements & `zip` the contents of the directory.
    ```
@@ -125,6 +122,11 @@ This lamdba function, which for this guide we will name `rebrandly-event`, is st
    $ cd lambda; zip -r ../lambda.zip *
    ```
    - Now import that newly created `lambda.zip` file into the secondary function code section
+
+3. Environment Variables
+   - You will notice after the import of the **Function Code** that it uses environment variables to extract the `BOT_USER_OAUTH_TOKEN` and the `REBRANDLY_API_KEY`
+   - In the **Environment Variables** section, add two key-value pairs for the above variables
+   - Save any changes made to the Function configuration
 
 
 Now the secondary lambda function is setup and ready to go! Assuming everything is connected as it should be, you can now invite your SlackApp to any channel and interact with it using the [supported commands](#supported-commands) below!
