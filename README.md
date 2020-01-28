@@ -5,6 +5,7 @@ This Slack Bot can be installed to provide your workspace with a quick and easy 
 The Rebrandly Bot leverages AWS Lambda to provide serverless compute power to support the functionality of the bot without needing to stand up a server to host a listener-script.
 
 # Getting Started
+You can choose to follow the guide below setting up the three components in order, however, it may be easier to initially just **Create** the two required lambda functions (without configuring anything) so that you can access their **ARN** values when needed without having to jump around the setup process.
 - [Prerequisites](#prerequisites)
 - [Bot User Setup](#setting-up-slack-app-as-a-bot-user)
 - [AWS Lambda Setup](#aws-lambda-setup)
@@ -108,20 +109,12 @@ This lamdba function, which for this guide we will name `rebrandly-event`, is st
       - Inside the **Destination** configuration
 
 2. Setup **Function Code**
-   - Inside of the `lambda` directory is the `lambda_function.py` and `requirement.txt` needed to support the bot's functionality.
-   - From the root directory, run the following sequence of commands to install the requirements & `zip` the contents of the directory.
-   ```
-   # install dependencies
-   $ cd lambda
-   $ pip install -r requirements --system -t .
-   $ cd ..
-
-   # zip directory
-   $ pwd
-   /some/path/to/rebrandly-bot
-   $ cd lambda; zip -r ../lambda.zip *
-   ```
-   - Now import that newly created `lambda.zip` file into the secondary function code section
+   - Inside of the `lambda` directory is the `lambda_function.py` and `requirements.txt` needed to support the bot's functionality. These will need to be zipped and imported in Lambda.
+   - The provided `zip.sh` bash script performs the necessary actions to install & zip the dependencies/code into a file named `lambda.zip`
+      ```
+      $ bash zip.sh
+      ```
+   - **Import** the newly created `lambda.zip` file into the secondary function code section
 
 3. Environment Variables
    - You will notice after the import of the **Function Code** that it uses environment variables to extract the `BOT_USER_OAUTH_TOKEN` and the `REBRANDLY_API_KEY`
