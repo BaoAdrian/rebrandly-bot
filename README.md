@@ -33,7 +33,7 @@ This portion requires you to navigate to the [`Slack API`](https://api.slack.com
 4. Next, navigate to **Event Subscriptions** so that we can setup our Bot User to subscribe to a specific event to respond to, `app_mention`.
    - When you toggle the option to ON, it will show a text entry for a **Request URL** to verify your endpoint. 
    - Slack provides a *challenge* in order to verify the endpoint and proceed with the subscription.
-   - We will need to setup the first lambda function following [these steps](#primary-lambda-function-setup) before proceeding. Once done, return to begin completing step 5 below.
+   - We will need to complete Step 1 of the first functions setup following [these steps](#primary-lambda-function-setup) before proceeding. Once done, return to begin completing step 5 below.
 
 5. Verifying our Lambda Function Endpoint
    - Paste the API Endpoint into the **Request URL** entry and complete the verification challenge
@@ -125,4 +125,58 @@ This lamdba function, which for this guide we will name `rebrandly-event`, is st
 Now the secondary lambda function is setup and ready to go! Assuming everything is connected as it should be, you can now invite your SlackApp to any channel and interact with it using the [supported commands](#supported-commands) below!
 
 
+# Interacting with the bot
+The Bot is setup to trigger a response whenever it is mentioned in a channel it has been added to (`app_mentioned` event). 
+
+You must mentioned the bot then provide it with some command and any additional arguments supported by that command (see [supported commands](#supported-commands) for more info on accepted commands/arguments).
+```
+@rebrandlybot [command] [args]
+```
+
 # Supported Commands
+`help` 
+- Displays a help menu to the user listing supported commands and general usage
+- Command: `help`
+- Args: None
+
+`rebrand [url]`
+- Rebrands the provided `url` with the default domain/slashtag generation methods
+- Command: `rebrand`
+- Args: 
+   - (Required) `url` that will be rebranded/shortened by the API
+
+`rebrand-custom [url] [domain|slashtag]`
+- Same functionality as the above command but with the added feature of customizing the domain and/or slashtag attributes of the rebranded link
+- Command: `rebrand-custom`
+- Args: 
+   - (Required) `url`: URL that will be rebranded/shortened by the API
+   - (Optional) `domain`: custom domain that the rebrand will be stored under
+   - (Optional) `slashtag`: custom slashtag that the rebranded link will use
+
+`search [show] [destination|slashtag|domain]`
+- Searches for links matching any provided arguments such as destination, domain, and slashtag
+- Command: `search`
+- Args:
+   - (Optional) `show`: Flag you can set to display the resulting info from a requested search
+   - (Optional) `destination`: Destination URL target for search
+   - (Optional) `slashtag`: Slashtag target for search
+   - (Optional) `domain`: Domain target for search
+
+`list [limit|orderBy|orderDir]`
+- Lists information on a specific number of links (default = 10)
+- Command: `list`
+- Args: 
+   - (Optional) `limit`: Limits the number of results returned to the value you set
+   - (Optional) `orderBy`: Sorting criteria to apply to the list command
+      - Options include: `createdAt`, `updatedAt`, `title`, and `slashtag`
+   - (Optional) `orderDir`: Sorting direction to apply to collection (either `asc` or `desc`)
+
+`count`
+- Counts the total number of rebranded links
+- Command: `count`
+- Args: None
+
+`where`
+- Provides user with link to public repository where this helpful guide is provided
+- Command: `where`
+- Args: None
