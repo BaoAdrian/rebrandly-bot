@@ -134,12 +134,12 @@ You must mentioned the bot then provide it with some command and any additional 
 ```
 
 # Supported Commands
-`help` 
+**`help`**
 - Displays a help menu to the user listing supported commands and general usage
 - Command: `help`
 - Args: None
 
-`rebrand [url]`
+**`rebrand [url]`**
 - Rebrands the provided `url` with the default domain/slashtag generation methods
 - Command: `rebrand`
 - Args: 
@@ -149,7 +149,7 @@ You must mentioned the bot then provide it with some command and any additional 
    @rebrandlybot rebrand https://someurl.com
    ```
 
-`rebrand-custom [url] [domain|slashtag]`
+**`rebrand-custom [url] [domain|slashtag]`**
 - Same functionality as the above command but with the added feature of customizing the domain and/or slashtag attributes of the rebranded link
 - Command: `rebrand-custom`
 - Args: 
@@ -161,7 +161,7 @@ You must mentioned the bot then provide it with some command and any additional 
    @rebrandlybot rebrand-custom https://someurl.com domain=rebrand.ly slashtag=someawesomesite
    ```
 
-`search [show] [destination|slashtag|domain]`
+**`search [show] [destination|slashtag|domain]`**
 - Searches for links matching any provided arguments such as destination, domain, and slashtag
 - Command: `search`
 - Args:
@@ -173,39 +173,37 @@ You must mentioned the bot then provide it with some command and any additional 
    - Searches all rebranded links pointing to the given `destination`
       ```
       @rebrandlybot search show destination=https://someurl.com
-      ... Displays the number of results found for the given parameters ...
       ```
    - Searches (and shows) all rebranded links under the given `domain`
       ```
       @rebrandlybot search show domain=rebrand.ly
-      ... Displays the info on the matching links ...
       ```
    - Searches (and shows) all rebranded links pointing to a given `destination` under a specifid `domain`
       ```
       @rebrandlybot search show destination=https://someurl.com domain=rebrand.ly
-      ... Displays the info on the matching links ...
       ```
  
 
-`list [limit|orderBy|orderDir]`
+**`list [limit|orderBy|orderDir]`**
 - Lists information on a specific number of links (default = 10)
 - Command: `list`
 - Args: 
    - (Optional) `limit`: Limits the number of results returned to the value you set
    - (Optional) `orderBy`: Sorting criteria to apply to the list command
       - Options include: `createdAt` (default), `updatedAt`, `title`, and `slashtag`
-   - (Optional) `orderDir`: Sorting direction to apply to collection, either `asc` (default) or `desc`
+   - (Optional) `orderDir`: Sorting direction to apply to collection, either `asc` or `desc` (default)
 - Sample Usage:
-   ```
-   @rebrandlybot list limit = 10 orderBy = createdAt orderDir = desc
-   ```
+   - Displays the last 10 rebranded links ordered by slashtag
+      ```
+      @rebrandlybot list limit = 10 orderBy = slashtag
+      ```
 
-`count`
+**`count`**
 - Counts the total number of rebranded links
 - Command: `count`
 - Args: None
 
-`where`
+**`where`**
 - Provides user with link to public repository where this helpful guide is provided
 - Command: `where`
 - Args: None
