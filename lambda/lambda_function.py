@@ -181,9 +181,9 @@ def rebrand_link(destination, slashtag=None, domain=None):
             error_response = ""
             for error in r_data["errors"]:
                 try:
-                    error_response += "> {}: {}\n".format(str(error["code"]), str(error["verbose"]))
+                    error_response += "{}: {}\n".format(str(error["code"]), str(error["verbose"]))
                 except KeyError: # No verbose descriptor
-                    error_response += "> {}\n".format(str(error["code"]))
+                    error_response += "{}\n".format(str(error["code"]))
             return (ERROR_CODE, error_response)
             
     return (ERROR_CODE, None)
