@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Install requirements
+# Install requirements & zip directory
 cd lambda
 pip3 install -r requirements.txt --system -t .
-cd ..
-
-# Create zipped folder for import
-cd lambda; zip -r ../lambda.zip *
+zip -r ../lambda.zip *
 cd ..
