@@ -24,8 +24,8 @@ This portion requires you to navigate to the [`Slack API`](https://api.slack.com
 
 1. Select **Start Building** from the dashboard & enter the requested App name & workspace.
 
-2. Add a **OAuth Scope** under the **OAuth & Permissions** tab
-   - Add `app_mentions:read` 
+2. Add a **Bot OAuth Token Scope** under the **OAuth & Permissions** tab
+   - Add `app_mentions:read` & `chat:write`
 
 3. Navigate to **Install App to Workspace** and install it to your workspace
    - Save the  **Bot User OAuth Access Token** as it will be used in the lambda function setup.
@@ -40,8 +40,8 @@ This portion requires you to navigate to the [`Slack API`](https://api.slack.com
       - You can use the following snippet to complete the verification challenge:
          ```
          return {
-         'statusCode': 200,
-         'body': json.loads(event["body"])["challenge"]
+            'statusCode': 200,
+            'body': json.loads(event["body"])["challenge"]
          }
          ```
    - Once verified, select **Subscribe to Bot Events** and subscribe to the `app_mention` event
@@ -96,12 +96,6 @@ If it fails to send that response within 3 seconds, it will retry the same reque
          - Request Conditions: No action required (see Step 1 of Secondary Function setup below)
       - Select **Review Policy**, name the policy and **Create Policy** to confirm
 
-5. Adding a **Destination**
-   - Selection **Destination** for the primary lambda function and enter the following values
-       - Source: `Asynchronous Invocation`
-       - Condition: `On Success`
-       - Destination: Paste the `ARN` of the secondary lambda function and `Save`
-
 
 Now the primary lambda function is setup to recieve incoming requests, asynchronously process the request and immediately return the required `200 HTTP OK` response back to the Slack API.
 
@@ -113,7 +107,6 @@ This lamdba function, which for this guide we will name `rebrandly-event`, is st
    - Name it and select **Python3.x** for the language & **Create Function**
    - Copy the **ARN** of THIS function and paste it into the corresponding locations as noted in the **primary lambda function setup** above
       - Inside the **Function Code**
-      - Inside the **Destination** configuration
 
 2. Setup **Function Code**
    - Inside of the `lambda` directory is the `lambda_function.py` and `requirements.txt` needed to support the bot's functionality. These will need to be zipped and imported in Lambda.
