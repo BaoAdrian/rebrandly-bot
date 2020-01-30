@@ -24,19 +24,26 @@ This portion requires you to navigate to the [`Slack API`](https://api.slack.com
 
 1. Select **Start Building** from the dashboard & enter the requested App name & workspace.
 
-2. Add a **Scope** under the **OAuth & Permissions** tab
+2. Add a **OAuth Scope** under the **OAuth & Permissions** tab
    - Add `app_mentions:read` 
 
-3. Navigate to **Install App** and install it to your workspace
-   - You will be provided with a **Bot User OAuth Access Token**. Save this token which will be used later when we configure the Lambda Function.
+3. Navigate to **Install App to Workspace** and install it to your workspace
+   - Save the  **Bot User OAuth Access Token** as it will be used in the lambda function setup.
 
-4. Next, navigate to **Event Subscriptions** so that we can setup our Bot User to subscribe to a specific event to respond to, `app_mention`.
-   - When you toggle the option to ON, it will show a text entry for a **Request URL** to verify your endpoint. 
-   - Slack provides a *challenge* in order to verify the endpoint and proceed with the subscription.
-   - We will need to complete Step 1 of the first functions setup following [these steps](#primary-lambda-function-setup) before proceeding. Once done, return to begin completing step 5 below.
+4. Navigate to **Event Subscriptions** to setup subscription to the `app_mention` event
+   - Toggle the option to ON and it will show a text entry for a **Request URL** to verify your API endpoint for your primary lambda function. 
+      - Slack provides a *challenge* in order to verify the endpoint and proceed with the subscription.
+   - If you haven't already, proceed to *Step 1* of the primary lambda function setup [below](#primary-lambda-function-setup) before proceeding. Once done, return to begin completing step 5 below.
 
 5. Verifying our Lambda Function Endpoint
-   - Paste the API Endpoint into the **Request URL** entry and complete the verification challenge
+   - Paste the **API Endpoint** into the **Request URL** entry and complete the verification challenge
+      - You can use the following snippet to complete the verification challenge:
+         ```
+         return {
+         'statusCode': 200,
+         'body': json.loads(event["body"])["challenge"]
+         }
+         ```
    - Once verified, select **Subscribe to Bot Events** and subscribe to the `app_mention` event
 
 
@@ -87,7 +94,7 @@ If it fails to send that response within 3 seconds, it will retry the same reque
          - Actions: **InvokeFunction**
          - Resources: Add **ARN** of secondary lambda function that will be created below
          - Request Conditions: No action required (see Step 1 of Secondary Function setup below)
-      - Select **Review Policy** and save the new policy for this role
+      - Select **Review Policy**, name the policy and **Create Policy** to confirm
 
 5. Adding a **Destination**
    - Selection **Destination** for the primary lambda function and enter the following values
@@ -121,6 +128,7 @@ This lamdba function, which for this guide we will name `rebrandly-event`, is st
    - In the **Environment Variables** section, add two key-value pairs for the above variables
    - Save any changes made to the Function configuration
 
+NOTE: If you wish to extend the `timeout` timeframe, modify the **Basic Settings** `Timeout` parameter to whatever value you see reasonable for your usecase
 
 Now the secondary lambda function is setup and ready to go! Assuming everything is connected as it should be, you can now invite your SlackApp to any channel and interact with it using the [supported commands](#supported-commands) below!
 
